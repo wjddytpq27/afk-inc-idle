@@ -39,6 +39,7 @@
     up: { click: 0, income: 0, offline: 0 }, // money upgrades (reset on prestige)
     autobuy: false, // unlocked once, persists through prestige
     autobuyOn: true,
+    onboarded: false, // first-session guided loop shown?
   };
 
   // ── Upgrade definitions (money sinks with real choices) ────
@@ -204,37 +205,61 @@
         this.ready = false; // SDK missing/blocked — fallbacks handle it
       }
     },
-    // Reward is always granted (on finish, on ad error, or with no SDK) so the
-    // mechanic stays fair with adblock, per CrazyGames requirements.
-    rewarded(onReward, onStart) {
+    // Portal rule: on a real ad network, grant the reward ONLY when the ad
+    // finishes — never on error/no-fill/adblock (opts.onFail handles those).
+    // Off-portal (SDK disabled → not monetized) the boost is just a free
+    // feature, so we grant immediately. Either way the game is fully playable
+    // without ads, so adblock users are never punished.
+    rewarded(onReward, opts) {
+      opts = opts || {};
       if (this.busy) return;
-      const wasMuted = state.muted;
-      const finish = () => {
-        this.busy = false;
-        state.muted = wasMuted;
-        try {
-          onReward && onReward();
-        } catch (_) {
-          /* reward handler must never crash the game */
-        }
-      };
       if (this.ready && this.sdk && this.sdk.ad) {
         this.busy = true;
+        const wasMuted = state.muted;
+        let done = false;
+        const restore = () => {
+          this.busy = false;
+          state.muted = wasMuted;
+        };
+        const call = (fn) => {
+          try {
+            fn && fn();
+          } catch (_) {
+            /* handler must never crash the game */
+          }
+        };
         try {
           this.sdk.ad.requestAd("rewarded", {
             adStarted: () => {
               state.muted = true; // silence game during the ad
-              onStart && onStart();
+              call(opts.onStart);
             },
-            adFinished: finish,
-            adError: finish, // no fill / adblock → still reward
+            adFinished: () => {
+              if (done) return;
+              done = true;
+              restore();
+              call(onReward);
+            },
+            adError: () => {
+              if (done) return;
+              done = true;
+              restore();
+              call(opts.onFail);
+            },
           });
           return;
         } catch (_) {
           this.busy = false;
         }
       }
-      finish(); // no ads available here — grant immediately
+      call2(onReward); // no portal ads here — grant immediately
+      function call2(fn) {
+        try {
+          fn && fn();
+        } catch (_) {
+          /* ignore */
+        }
+      }
     },
     interstitial() {
       if (!(this.ready && this.sdk && this.sdk.ad)) return;
@@ -446,6 +471,7 @@
       state.up.offline = state.up.offline || 0;
       if (typeof state.autobuy !== "boolean") state.autobuy = false;
       if (typeof state.autobuyOn !== "boolean") state.autobuyOn = true;
+      if (typeof state.onboarded !== "boolean") state.onboarded = false;
       if (typeof state.lifetimeEarned !== "number")
         state.lifetimeEarned = state.earned || 0;
       if (typeof state.prestigeCount !== "number") state.prestigeCount = 0;
@@ -775,6 +801,96 @@
     }
   }
 
+  // ── Onboarding: curated forced loop (tap → buy → automate) ─
+  // Research-backed: teach the core verb by forcing it once, no text wall.
+  // Everything but the current target is dimmed & non-interactive.
+  const Onboard = {
+    active: false,
+    step: 0,
+    finger: null,
+    refs: null,
+    start() {
+      if (state.onboarded || state.lifetimeEarned > 0) return;
+      this.refs = {
+        coach: document.getElementById("coach"),
+        text: document.getElementById("coachText"),
+        hud: document.querySelector(".hud"),
+        scene: document.querySelector(".scene-wrap"),
+        clickerWrap: document.querySelector(".clicker-wrap"),
+        clicker: document.getElementById("clicker"),
+        boostBtn: document.getElementById("boostBtn"),
+        boostBar: document.getElementById("boostBar"),
+        buymode: document.querySelector(".buymode"),
+        gensPanel: document.getElementById("gensPanel"),
+        upsPanel: document.getElementById("upsPanel"),
+        prestige: document.querySelector(".prestige-panel"),
+        foot: document.querySelector(".foot"),
+        firstGen: cards[0] && cards[0].el,
+      };
+      if (!this.refs.coach) return;
+      this.active = true;
+      this.refs.coach.classList.remove("hidden");
+      const skip = document.getElementById("coachSkip");
+      if (skip) skip.addEventListener("click", () => this.finish(), { once: true });
+      this.toStep(1);
+    },
+    dim(list) {
+      list.forEach((el) => el && el.classList.add("coach-dim"));
+    },
+    putFinger(target, emoji) {
+      if (!target) return;
+      const f = document.createElement("span");
+      f.className = "coach-finger";
+      f.textContent = emoji || "👆";
+      target.appendChild(f);
+      this.finger = f;
+    },
+    clearMarks() {
+      const r = this.refs;
+      if (!r) return;
+      [r.hud, r.scene, r.clickerWrap, r.clicker, r.boostBtn, r.boostBar, r.buymode, r.gensPanel, r.upsPanel, r.prestige, r.foot, r.firstGen].forEach(
+        (el) => el && el.classList.remove("coach-dim", "coach-focus"),
+      );
+      if (this.finger && this.finger.parentNode) this.finger.parentNode.removeChild(this.finger);
+      this.finger = null;
+    },
+    toStep(n) {
+      this.clearMarks();
+      const r = this.refs;
+      this.step = n;
+      if (n === 1) {
+        this.dim([r.hud, r.scene, r.boostBtn, r.boostBar, r.buymode, r.gensPanel, r.upsPanel, r.prestige, r.foot]);
+        if (r.clicker) r.clicker.classList.add("coach-focus");
+        this.putFinger(r.clicker, "👆");
+        r.text.textContent = "여기를 탭해서 돈을 벌어보세요!";
+      } else if (n === 2) {
+        this.dim([r.hud, r.scene, r.clickerWrap, r.boostBtn, r.boostBar, r.buymode, r.upsPanel, r.prestige, r.foot]);
+        if (r.firstGen) {
+          r.firstGen.classList.add("coach-focus");
+          this.putFinger(r.firstGen, "👆");
+          r.firstGen.scrollIntoView({ block: "center" });
+        }
+        r.text.textContent = "첫 봇을 고용하세요 — 자리를 비워도 자동으로 벌어줘요!";
+      } else if (n === 3) {
+        r.text.textContent = "완성! 봇이 알아서 돈을 벌어둬요 💰 더 사서 제국을 키워보세요";
+        setTimeout(() => this.finish(), 3800);
+      }
+    },
+    tick() {
+      if (!this.active) return;
+      if (this.step === 1 && state.money >= GEN[0].baseCost) this.toStep(2);
+      else if (this.step === 2 && state.gens[0].owned >= 1) this.toStep(3);
+    },
+    finish() {
+      if (!this.active) return;
+      this.active = false;
+      this.clearMarks();
+      if (this.refs && this.refs.coach) this.refs.coach.classList.add("hidden");
+      state.onboarded = true;
+      save();
+    },
+  };
+
   // ── Loop ───────────────────────────────────────────────────
   let last = performance.now();
   function frame(now) {
@@ -783,6 +899,7 @@
     if (state.money >= 0) addMoney(totalRate() * dt);
     runAutobuy();
     checkMoneyAchievements();
+    Onboard.tick();
     render();
     requestAnimationFrame(frame);
   }
@@ -810,12 +927,15 @@
     boostBtn.addEventListener("click", () => {
       if (boostActive()) return;
       Sfx.init();
-      Ads.rewarded(() => {
-        boostUntil = Date.now() + BOOST_MS;
-        Sfx.milestone();
-        toast("2배 부스터 발동! 60초 동안 수익 2배", "🔥");
-        renderBoost();
-      });
+      Ads.rewarded(
+        () => {
+          boostUntil = Date.now() + BOOST_MS;
+          Sfx.milestone();
+          toast("2배 부스터 발동! 60초 동안 수익 2배", "🔥");
+          renderBoost();
+        },
+        { onFail: () => toast("광고를 불러오지 못했어요. 잠시 후 다시 시도해요", "⚠️") },
+      );
     });
   }
 
@@ -826,12 +946,15 @@
       const bonus = lastOfflineGain; // grant the same amount again → 2×
       lastOfflineGain = 0;
       offlineDoubleBtn.classList.add("hidden");
-      Ads.rewarded(() => {
-        addMoney(bonus);
-        Sfx.milestone();
-        toast("오프라인 수익 2배 획득! +₩" + fmt(bonus), "💰");
-        offlineModal.classList.add("hidden");
-      });
+      Ads.rewarded(
+        () => {
+          addMoney(bonus);
+          Sfx.milestone();
+          toast("오프라인 수익 2배 획득! +₩" + fmt(bonus), "💰");
+          offlineModal.classList.add("hidden");
+        },
+        { onFail: () => toast("광고를 불러오지 못했어요. '그냥 받기'로 진행해요", "⚠️") },
+      );
     });
   }
 
@@ -855,6 +978,7 @@
     Sfx.init();
     if (titleEl) titleEl.classList.add("hidden");
     applyOffline(); // grant + show "돌아온 사이 벌었어요" after entering
+    Onboard.start(); // first-session guided loop (no-op for returning players)
   }
   if (startBtn) startBtn.addEventListener("click", startGame);
   document.querySelectorAll(".buymode button").forEach((b) => {

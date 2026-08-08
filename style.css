@@ -53,8 +53,11 @@ body {
   padding: 12px 14px calc(28px + var(--safe-b));
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
+.play { display: flex; flex-direction: column; gap: 12px; }
+.stage { display: flex; flex-direction: column; gap: 12px; }
+.shop { display: flex; flex-direction: column; gap: 12px; }
 
 /* ── HUD ───────────────────────────────────────────────── */
 .hud {
@@ -127,7 +130,7 @@ body {
 }
 .scene {
   position: relative;
-  height: 168px;
+  height: clamp(124px, 20vh, 172px);
   transition: background 1.2s var(--ease);
   overflow: hidden;
 }
@@ -374,7 +377,11 @@ body {
 .gen.afford {
   border-color: var(--gold);
   background: linear-gradient(180deg, var(--surface-2), var(--surface));
-  box-shadow: 0 0 0 1px rgba(255, 207, 74, 0.25), 0 6px 18px rgba(245, 166, 35, 0.12);
+  animation: affordPulse 1.8s var(--ease) infinite;
+}
+@keyframes affordPulse {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 207, 74, 0.25), 0 6px 18px rgba(245, 166, 35, 0.1); }
+  50% { box-shadow: 0 0 0 1px rgba(255, 207, 74, 0.55), 0 6px 26px rgba(245, 166, 35, 0.3); }
 }
 .gen.maxed { opacity: 0.85; cursor: pointer; }
 .gen .icon {
@@ -609,9 +616,80 @@ body {
   }
 }
 
-/* Desktop framing: keep the phone-width column centered on a subtle backdrop */
-@media (min-width: 620px) {
-  body { background:
-      radial-gradient(90% 60% at 50% -10%, #1a1e44 0%, var(--bg) 55%), var(--bg); }
-  .app { box-shadow: 0 0 0 1px var(--line), 0 30px 80px rgba(0,0,0,0.5); border-radius: 28px; margin-top: 18px; margin-bottom: 18px; }
+/* ── Onboarding coach ──────────────────────────────────── */
+/* No full-screen box — bubble & skip are standalone fixed chips so nothing
+   overlays (and intercepts) the interactive target during onboarding. */
+.coach { display: contents; }
+.coach-bubble {
+  position: fixed;
+  z-index: 74;
+  left: 50%; bottom: calc(26px + var(--safe-b));
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(88vw, 440px);
+  padding: 14px 20px;
+  background: linear-gradient(180deg, var(--gold), var(--gold-deep));
+  color: #2a1c00;
+  font-weight: 800; font-size: 15px; line-height: 1.45; text-align: center;
+  border-radius: 16px;
+  box-shadow: 0 14px 34px rgba(245, 166, 35, 0.5);
+  animation: coachIn 0.35s var(--ease);
+}
+@keyframes coachIn {
+  from { transform: translate(-50%, 14px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+.coach-skip {
+  position: fixed;
+  z-index: 75;
+  top: calc(14px + var(--safe-b)); right: 14px;
+  pointer-events: auto;
+  background: rgba(23, 26, 53, 0.92); color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: 8px 14px; font-size: 12px; font-weight: 700; cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.coach-skip:active { transform: scale(0.95); }
+
+/* dim everything not in focus during onboarding */
+.coach-dim { opacity: 0.22 !important; filter: grayscale(0.5); pointer-events: none !important; }
+.coach-focus { position: relative; z-index: 72; }
+.coach-focus::after {
+  content: ""; position: absolute; inset: -7px; border-radius: inherit;
+  border: 3px solid var(--gold);
+  box-shadow: 0 0 0 5px rgba(255, 207, 74, 0.16), 0 0 30px rgba(255, 207, 74, 0.5);
+  animation: focusRing 1.3s var(--ease) infinite;
+  pointer-events: none;
+}
+@keyframes focusRing { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+.coach-finger {
+  position: absolute; left: 50%; bottom: -14px;
+  transform: translateX(-50%); font-size: 42px; z-index: 73;
+  pointer-events: none; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.55));
+  animation: fingerBounce 1s var(--ease) infinite;
+}
+@keyframes fingerBounce {
+  0%, 100% { transform: translate(-50%, 0); }
+  50% { transform: translate(-50%, -13px); }
+}
+
+/* ── Desktop / landscape: 2-panel "arcade cabinet" ─────── */
+@media (min-width: 900px) {
+  body { background: radial-gradient(90% 70% at 50% -10%, #1a1e44 0%, var(--bg) 55%), var(--bg); }
+  .app { max-width: 1060px; padding: 16px 24px 32px; gap: 16px; }
+  .play {
+    display: grid;
+    grid-template-columns: minmax(320px, 380px) 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .stage { position: sticky; top: 96px; }
+  .scene { height: 240px; }
+  .clicker { width: 176px; height: 176px; }
+  .clicker-wrap { padding: 10px 0 6px; }
+  .shop { min-width: 0; }
+}
+@media (min-width: 1180px) {
+  .app { max-width: 1160px; }
+  .play { grid-template-columns: minmax(340px, 420px) 1fr; }
 }

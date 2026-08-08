@@ -40,59 +40,69 @@
       </div>
     </header>
 
-    <!-- Scene / diorama -->
-    <section class="scene-wrap">
-      <div id="tower" class="scene"></div>
-    </section>
+    <div class="play">
+      <!-- Stage: scene + clicker + boost (left panel on desktop) -->
+      <section class="stage">
+        <section class="scene-wrap">
+          <div id="tower" class="scene"></div>
+        </section>
 
-    <!-- Clicker -->
-    <section class="clicker-wrap">
-      <button id="clicker" class="clicker" aria-label="돈 벌기">
-        <span class="clicker-emoji">💰</span>
-        <span class="clicker-label">탭해서 벌기</span>
-      </button>
-      <div id="clickval" class="clickval">클릭당 +₩1</div>
-    </section>
+        <section class="clicker-wrap">
+          <button id="clicker" class="clicker" aria-label="돈 벌기">
+            <span class="clicker-emoji">💰</span>
+            <span class="clicker-label">탭해서 벌기</span>
+          </button>
+          <div id="clickval" class="clickval">클릭당 +₩1</div>
+        </section>
 
-    <!-- Rewarded boost -->
-    <button id="boostBtn" class="boost" type="button">
-      <span class="boost-ic">📺</span>
-      <span class="boost-tx">광고 보고 <b>2배 부스터</b> (60초)</span>
-    </button>
-    <div id="boostBar" class="boost-active hidden">
-      <div class="boost-active-tx">🔥 2배 부스터 <span id="boostTime">60</span>초</div>
-      <div class="boost-prog"><span id="boostProg"></span></div>
+        <!-- Rewarded boost -->
+        <button id="boostBtn" class="boost" type="button">
+          <span class="boost-ic">📺</span>
+          <span class="boost-tx">광고 보고 <b>2배 부스터</b> (60초)</span>
+        </button>
+        <div id="boostBar" class="boost-active hidden">
+          <div class="boost-active-tx">🔥 2배 부스터 <span id="boostTime">60</span>초</div>
+          <div class="boost-prog"><span id="boostProg"></span></div>
+        </div>
+      </section>
+
+      <!-- Shop: buy mode + generators + upgrades + prestige (right panel on desktop) -->
+      <section class="shop">
+        <div class="buymode" role="group" aria-label="구매 수량">
+          <button data-mode="1" class="on">×1</button>
+          <button data-mode="10">×10</button>
+          <button data-mode="100">×100</button>
+          <button data-mode="max">MAX</button>
+        </div>
+
+        <section class="panel" id="gensPanel">
+          <h2 class="panel-h">수익원</h2>
+          <div id="gens" class="list"></div>
+        </section>
+
+        <section class="panel" id="upsPanel">
+          <h2 class="panel-h">강화 · 자동화</h2>
+          <div id="ups" class="list"></div>
+        </section>
+
+        <section class="panel prestige-panel">
+          <h2 class="panel-h">🌌 특이점 리셋</h2>
+          <p id="prestigeInfo" class="prestige-info">₩1B 이상 벌면 리셋 가능.</p>
+          <button id="prestigeBtn" class="prestige-btn" disabled>리셋 불가</button>
+        </section>
+      </section>
     </div>
-
-    <!-- Buy mode -->
-    <div class="buymode" role="group" aria-label="구매 수량">
-      <button data-mode="1" class="on">×1</button>
-      <button data-mode="10">×10</button>
-      <button data-mode="100">×100</button>
-      <button data-mode="max">MAX</button>
-    </div>
-
-    <!-- Generators -->
-    <section class="panel">
-      <h2 class="panel-h">수익원</h2>
-      <div id="gens" class="list"></div>
-    </section>
-
-    <!-- Upgrades -->
-    <section class="panel">
-      <h2 class="panel-h">강화 · 자동화</h2>
-      <div id="ups" class="list"></div>
-    </section>
-
-    <!-- Prestige -->
-    <section class="panel prestige-panel">
-      <h2 class="panel-h">🌌 특이점 리셋</h2>
-      <p id="prestigeInfo" class="prestige-info">₩1B 이상 벌면 리셋 가능.</p>
-      <button id="prestigeBtn" class="prestige-btn" disabled>리셋 불가</button>
-    </section>
 
     <footer class="foot">© AFK 주식회사 · 방치형 머니 게임</footer>
   </main>
+
+  <!-- Onboarding coach (populated by JS on first play) -->
+  <div id="coach" class="coach hidden">
+    <div class="coach-bubble">
+      <span id="coachText" class="coach-text"></span>
+    </div>
+    <button id="coachSkip" class="coach-skip" type="button">건너뛰기</button>
+  </div>
 
   <!-- Offline earnings modal -->
   <div id="offlineModal" class="modal hidden">
