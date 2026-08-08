@@ -57,6 +57,7 @@
     autobuy: false, // unlocked once, persists through prestige
     autobuyOn: true,
     onboarded: false, // first-session guided loop shown?
+    tapGauge: 0, // manual taps toward the next Tap Frenzy
   };
 
   // ── Upgrade definitions (labels come from the locale; val → display value) ──
@@ -71,6 +72,8 @@
 
   // ── Rewarded-ad boost (native idle monetization) ───────────
   const BOOST_MS = 60000; // 2× income for 60s per rewarded ad
+  const TAP_GOAL = 200; // manual taps to fill the frenzy gauge (tunable)
+  const FRENZY_MS = 30000; // 2× income for 30s when the tap gauge fills
   let boostUntil = 0; // runtime only — not saved (no boost carries across reload)
   let lastOfflineGain = 0; // pending offline gain, doublable via rewarded ad
   let sdkMuted = false; // CrazyGames site-level mute (overrides in-game audio)
@@ -361,6 +364,15 @@
     moneyEl.classList.remove("pop");
     void moneyEl.offsetWidth; // restart animation
     moneyEl.classList.add("pop");
+    // Active-play reward: manual taps fill the frenzy gauge (passive income and
+    // auto-buy don't count — only real taps). On full → a 30s 2× Tap Frenzy.
+    state.tapGauge = (state.tapGauge || 0) + 1;
+    if (state.tapGauge >= TAP_GOAL) {
+      state.tapGauge = 0;
+      boostUntil = Math.max(boostUntil, Date.now() + FRENZY_MS); // shares the 2× state — extends, never stacks
+      Sfx.milestone();
+      toast(L.tFrenzy, "⚡");
+    }
   }
 
   function buy(i) {
@@ -487,6 +499,7 @@
       if (typeof state.autobuy !== "boolean") state.autobuy = false;
       if (typeof state.autobuyOn !== "boolean") state.autobuyOn = true;
       if (typeof state.onboarded !== "boolean") state.onboarded = false;
+      if (typeof state.tapGauge !== "number") state.tapGauge = 0;
       if (typeof state.lifetimeEarned !== "number")
         state.lifetimeEarned = state.earned || 0;
       if (typeof state.prestigeCount !== "number") state.prestigeCount = 0;
@@ -532,6 +545,8 @@
   const boostBar = document.getElementById("boostBar");
   const boostLabelEl = document.getElementById("boostLabel");
   const boostProgEl = document.getElementById("boostProg");
+  const tapGaugeFillEl = document.getElementById("tapGaugeFill");
+  const tapGaugeNumEl = document.getElementById("tapGaugeNum");
   const offlineDoubleBtn = document.getElementById("offlineDoubleBtn");
 
   function spawnFloat(e, text) {
@@ -805,7 +820,15 @@
 
     renderUps();
     renderBoost();
+    renderTapGauge();
     renderScene();
+  }
+
+  function renderTapGauge() {
+    if (!tapGaugeFillEl) return;
+    const g = Math.min(TAP_GOAL, state.tapGauge || 0);
+    tapGaugeFillEl.style.width = (g / TAP_GOAL) * 100 + "%";
+    if (tapGaugeNumEl) tapGaugeNumEl.textContent = g + " / " + TAP_GOAL;
   }
 
   function renderBoost() {

@@ -53,14 +53,14 @@ body {
   padding: 10px 14px calc(8px + var(--safe-b));
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   height: 100vh;
   height: 100dvh; /* fill the viewport; the page itself never scrolls */
   overflow: hidden;
 }
 /* Fixed top (HUD + stage); only the shop list scrolls inside its own box. */
-.play { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
-.stage { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+.play { display: flex; flex-direction: column; gap: 8px; flex: 1; min-height: 0; }
+.stage { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
 .shop {
   display: flex; flex-direction: column; gap: 10px;
   flex: 1; min-height: 0;
@@ -145,7 +145,7 @@ body {
 }
 .scene {
   position: relative;
-  height: clamp(110px, 17vh, 184px); /* shrinks on short viewports so the boost CTA stays visible */
+  height: clamp(94px, 15vh, 182px); /* shrinks on short viewports so the boost CTA stays visible */
   transition: background 1.2s var(--ease);
   overflow: hidden;
 }
@@ -271,7 +271,7 @@ body {
 .clicker {
   position: relative;
   width: 100%;
-  min-height: clamp(96px, 15vh, 132px); /* scales with viewport height */
+  min-height: clamp(84px, 14vh, 132px); /* scales with viewport height */
   border-radius: 22px;
   border: none;
   cursor: pointer;
@@ -299,7 +299,7 @@ body {
 }
 .clicker-emoji { font-size: clamp(44px, 8.5vh, 60px); line-height: 1; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.28)); }
 .clicker-label { font-size: clamp(17px, 2.6vh, 22px); font-weight: 900; letter-spacing: 0.01em; }
-.clickval { margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--gold); }
+.clickval { margin-top: 5px; font-size: 14px; font-weight: 700; color: var(--gold); }
 
 .float {
   position: absolute;
@@ -350,6 +350,28 @@ body {
 .boost .boost-ic { font-size: 18px; }
 .boost b { color: var(--green); }
 .boost:hover { box-shadow: 0 6px 18px rgba(70, 229, 160, 0.2); }
+
+/* Tap Frenzy gauge — active-play boost, distinct blue/accent look */
+.tapgauge {
+  padding: 6px 12px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.tapgauge-tx {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 12px; font-weight: 700; color: var(--muted);
+  margin-bottom: 6px;
+}
+.tapgauge-tx b { color: var(--accent-2); }
+.tapgauge-num { font-variant-numeric: tabular-nums; }
+.tapgauge-bar { height: 6px; background: var(--bg-2); border-radius: 999px; overflow: hidden; }
+.tapgauge-bar > span {
+  display: block; height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  border-radius: 999px;
+  transition: width 0.15s linear;
+}
 
 .boost-active {
   padding: 12px 14px;
