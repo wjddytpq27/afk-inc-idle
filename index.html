@@ -55,6 +55,16 @@
       <div id="clickval" class="clickval">클릭당 +₩1</div>
     </section>
 
+    <!-- Rewarded boost -->
+    <button id="boostBtn" class="boost" type="button">
+      <span class="boost-ic">📺</span>
+      <span class="boost-tx">광고 보고 <b>2배 부스터</b> (60초)</span>
+    </button>
+    <div id="boostBar" class="boost-active hidden">
+      <div class="boost-active-tx">🔥 2배 부스터 <span id="boostTime">60</span>초</div>
+      <div class="boost-prog"><span id="boostProg"></span></div>
+    </div>
+
     <!-- Buy mode -->
     <div class="buymode" role="group" aria-label="구매 수량">
       <button data-mode="1" class="on">×1</button>
@@ -92,10 +102,12 @@
       <h3 class="modal-title">돌아온 사이 벌었어요!</h3>
       <div id="offlineEarned" class="modal-amount">₩0</div>
       <p id="offlineText" class="modal-text"></p>
-      <button id="offlineOk" class="modal-ok">받기</button>
+      <button id="offlineDoubleBtn" class="modal-ad">📺 광고 보고 <b>2배</b>로 받기</button>
+      <button id="offlineOk" class="modal-ok">그냥 받기</button>
     </div>
   </div>
 
+  <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

@@ -263,6 +263,59 @@ body {
   100% { transform: translate(var(--dx), var(--dy)) scale(1.1); opacity: 0; }
 }
 
+/* ── Rewarded boost ────────────────────────────────────── */
+.boost {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px;
+  border: 1px solid rgba(70, 229, 160, 0.45);
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, rgba(70, 229, 160, 0.16), rgba(70, 229, 160, 0.06));
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.1s var(--ease), box-shadow 0.2s;
+}
+.boost:active { transform: scale(0.98); }
+.boost .boost-ic { font-size: 18px; }
+.boost .boost-tx b { color: var(--green); }
+.boost:hover { box-shadow: 0 6px 18px rgba(70, 229, 160, 0.2); }
+
+.boost-active {
+  padding: 12px 14px;
+  border: 1px solid rgba(245, 166, 35, 0.5);
+  border-radius: var(--r-md);
+  background: linear-gradient(180deg, rgba(245, 166, 35, 0.18), rgba(245, 166, 35, 0.06));
+}
+.boost-active-tx { font-size: 14px; font-weight: 800; color: var(--gold); margin-bottom: 8px; }
+.boost-prog { height: 6px; background: var(--bg-2); border-radius: 999px; overflow: hidden; }
+.boost-prog > span {
+  display: block; height: 100%; width: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  border-radius: 999px;
+  transition: width 0.25s linear;
+}
+
+.modal-ad {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(70, 229, 160, 0.5);
+  border-radius: var(--r-md);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  cursor: pointer;
+  background: linear-gradient(180deg, rgba(70, 229, 160, 0.2), rgba(70, 229, 160, 0.08));
+  transition: transform 0.1s var(--ease);
+}
+.modal-ad b { color: var(--green); }
+.modal-ad:active { transform: scale(0.97); }
+
 /* ── Buy mode ──────────────────────────────────────────── */
 .buymode {
   display: flex;

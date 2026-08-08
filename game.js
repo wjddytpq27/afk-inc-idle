@@ -73,6 +73,14 @@
   ];
   const AUTOBUY_COST = 1000000;
 
+  // ── Rewarded-ad boost (native idle monetization) ───────────
+  const BOOST_MS = 60000; // 2× income for 60s per rewarded ad
+  let boostUntil = 0; // runtime only — not saved (no boost carries across reload)
+  let lastOfflineGain = 0; // pending offline gain, doublable via rewarded ad
+  function boostActive() {
+    return Date.now() < boostUntil;
+  }
+
   // ── Math helpers ───────────────────────────────────────────
   const SUF = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
   function fmt(n) {
@@ -91,7 +99,7 @@
     return m;
   }
   function globalMult() {
-    return (1 + 0.02 * state.pp) * Math.pow(1.6, state.up.income);
+    return (1 + 0.02 * state.pp) * Math.pow(1.6, state.up.income) * (boostActive() ? 2 : 1);
   }
   function clickValue() {
     return Math.pow(2, state.up.click) * globalMult();
@@ -173,6 +181,79 @@
       [440, 660, 880, 1320].forEach((f, i) =>
         setTimeout(() => this.tone(f, 0.24, "sine", 0.07), i * 90),
       );
+    },
+  };
+
+  // ── Ads: thin wrapper over the CrazyGames SDK ──────────────
+  // On CrazyGames → real video ads. On localhost → SDK shows a placeholder.
+  // Anywhere else (Vercel/GitHub) the SDK is "disabled", so we fall back to
+  // granting the reward directly — the game (and its boosts) always work.
+  const Ads = {
+    sdk: null,
+    ready: false,
+    busy: false,
+    async init() {
+      try {
+        const SDK = window.CrazyGames && window.CrazyGames.SDK;
+        if (SDK && typeof SDK.init === "function") {
+          await SDK.init();
+          this.sdk = SDK;
+          this.ready = SDK.environment !== "disabled";
+        }
+      } catch (_) {
+        this.ready = false; // SDK missing/blocked — fallbacks handle it
+      }
+    },
+    // Reward is always granted (on finish, on ad error, or with no SDK) so the
+    // mechanic stays fair with adblock, per CrazyGames requirements.
+    rewarded(onReward, onStart) {
+      if (this.busy) return;
+      const wasMuted = state.muted;
+      const finish = () => {
+        this.busy = false;
+        state.muted = wasMuted;
+        try {
+          onReward && onReward();
+        } catch (_) {
+          /* reward handler must never crash the game */
+        }
+      };
+      if (this.ready && this.sdk && this.sdk.ad) {
+        this.busy = true;
+        try {
+          this.sdk.ad.requestAd("rewarded", {
+            adStarted: () => {
+              state.muted = true; // silence game during the ad
+              onStart && onStart();
+            },
+            adFinished: finish,
+            adError: finish, // no fill / adblock → still reward
+          });
+          return;
+        } catch (_) {
+          this.busy = false;
+        }
+      }
+      finish(); // no ads available here — grant immediately
+    },
+    interstitial() {
+      if (!(this.ready && this.sdk && this.sdk.ad)) return;
+      const wasMuted = state.muted;
+      try {
+        this.sdk.ad.requestAd("midgame", {
+          adStarted: () => {
+            state.muted = true;
+          },
+          adFinished: () => {
+            state.muted = wasMuted;
+          },
+          adError: () => {
+            state.muted = wasMuted;
+          },
+        });
+      } catch (_) {
+        /* ignore — ads are best-effort */
+      }
     },
   };
 
@@ -287,6 +368,7 @@
     achieve("p1", "첫 특이점 돌파", "🌌");
     if (state.prestigeCount >= 5) achieve("p5", "특이점 5회 — 초월자", "✨");
     save();
+    Ads.interstitial(); // natural break — show a midgame ad
   }
 
   function buyUp(u) {
@@ -377,9 +459,11 @@
     const gain = totalRate() * dt * offlineEff();
     if (gain <= 0) return;
     addMoney(gain);
+    lastOfflineGain = gain; // doublable via rewarded ad
     offlineEarnedEl.textContent = "₩" + fmt(gain);
     const mins = Math.floor(dt / 60);
     offlineTextEl.textContent = `자리 비운 ${mins}분 동안 AI가 벌어둔 금액이에요. (효율 ${Math.round(offlineEff() * 100)}%)`;
+    if (offlineDoubleBtn) offlineDoubleBtn.classList.remove("hidden");
     offlineModal.classList.remove("hidden");
   }
 
@@ -403,6 +487,11 @@
   const titleEl = document.getElementById("title");
   const startBtn = document.getElementById("startBtn");
   const titleNoteEl = document.getElementById("titleNote");
+  const boostBtn = document.getElementById("boostBtn");
+  const boostBar = document.getElementById("boostBar");
+  const boostTimeEl = document.getElementById("boostTime");
+  const boostProgEl = document.getElementById("boostProg");
+  const offlineDoubleBtn = document.getElementById("offlineDoubleBtn");
 
   function spawnFloat(e, text) {
     const f = document.createElement("span");
@@ -668,7 +757,22 @@
     }
 
     renderUps();
+    renderBoost();
     renderScene();
+  }
+
+  function renderBoost() {
+    if (!boostBtn || !boostBar) return;
+    if (boostActive()) {
+      const remain = boostUntil - Date.now();
+      boostBtn.classList.add("hidden");
+      boostBar.classList.remove("hidden");
+      if (boostTimeEl) boostTimeEl.textContent = Math.ceil(remain / 1000);
+      if (boostProgEl) boostProgEl.style.width = Math.max(0, (remain / BOOST_MS) * 100) + "%";
+    } else {
+      boostBtn.classList.remove("hidden");
+      boostBar.classList.add("hidden");
+    }
   }
 
   // ── Loop ───────────────────────────────────────────────────
@@ -690,8 +794,38 @@
   });
   prestigeBtn.addEventListener("click", prestige);
   document.getElementById("offlineOk").addEventListener("click", () => {
+    lastOfflineGain = 0;
     offlineModal.classList.add("hidden");
   });
+
+  if (boostBtn) {
+    boostBtn.addEventListener("click", () => {
+      if (boostActive()) return;
+      Sfx.init();
+      Ads.rewarded(() => {
+        boostUntil = Date.now() + BOOST_MS;
+        Sfx.milestone();
+        toast("2배 부스터 발동! 60초 동안 수익 2배", "🔥");
+        renderBoost();
+      });
+    });
+  }
+
+  if (offlineDoubleBtn) {
+    offlineDoubleBtn.addEventListener("click", () => {
+      if (lastOfflineGain <= 0) return;
+      Sfx.init();
+      const bonus = lastOfflineGain; // grant the same amount again → 2×
+      lastOfflineGain = 0;
+      offlineDoubleBtn.classList.add("hidden");
+      Ads.rewarded(() => {
+        addMoney(bonus);
+        Sfx.milestone();
+        toast("오프라인 수익 2배 획득! +₩" + fmt(bonus), "💰");
+        offlineModal.classList.add("hidden");
+      });
+    });
+  }
 
   const muteBtn = document.getElementById("mute");
   function renderMute() {
@@ -724,6 +858,7 @@
   });
 
   // ── Boot ───────────────────────────────────────────────────
+  Ads.init(); // async, non-blocking — enables real ads on CrazyGames
   load();
   buildCards();
   buildUps();
