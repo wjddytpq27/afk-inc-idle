@@ -254,10 +254,13 @@
               call(onReward);
             },
             adError: () => {
+              // No ad available (Basic Launch / adblock / no-fill) → still grant
+              // this optional reward so the feature always works. Real ads show
+              // and earn once the game is promoted to Full Launch.
               if (done) return;
               done = true;
               restore();
-              call(opts.onFail);
+              call(onReward);
             },
           });
           return;
@@ -945,15 +948,12 @@
     boostBtn.addEventListener("click", () => {
       if (boostActive()) return;
       Sfx.init();
-      Ads.rewarded(
-        () => {
-          boostUntil = Date.now() + BOOST_MS;
-          Sfx.milestone();
-          toast(L.tBoostOn, "🔥");
-          renderBoost();
-        },
-        { onFail: () => toast(L.tAdFailBoost, "⚠️") },
-      );
+      Ads.rewarded(() => {
+        boostUntil = Date.now() + BOOST_MS;
+        Sfx.milestone();
+        toast(L.tBoostOn, "🔥");
+        renderBoost();
+      });
     });
   }
 
@@ -964,15 +964,12 @@
       const bonus = lastOfflineGain; // grant the same amount again → 2×
       lastOfflineGain = 0;
       offlineDoubleBtn.classList.add("hidden");
-      Ads.rewarded(
-        () => {
-          addMoney(bonus);
-          Sfx.milestone();
-          toast(L.tOfflineDoubled(fmt(bonus)), "💰");
-          offlineModal.classList.add("hidden");
-        },
-        { onFail: () => toast(L.tAdFailOffline, "⚠️") },
-      );
+      Ads.rewarded(() => {
+        addMoney(bonus);
+        Sfx.milestone();
+        toast(L.tOfflineDoubled(fmt(bonus)), "💰");
+        offlineModal.classList.add("hidden");
+      });
     });
   }
 
