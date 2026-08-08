@@ -673,45 +673,52 @@
     const wrap = towerEl.parentElement;
     if (wrap) wrap.style.background = `linear-gradient(180deg, ${st.sky[0]}, ${st.sky[1]})`;
 
-    // build skyline: n buildings, height varies, windows lit at night
+    // Skyline: fills the full width; height scales up with the era so early
+    // stages read as a low townscape and late stages as a tall metropolis.
+    const count = Math.min(16, 7 + si);
+    const eraScale = si <= 2 ? 0.5 : si <= 4 ? 0.72 : si <= 6 ? 0.88 : 1;
     let buildings = "";
-    const count = st.n;
     for (let i = 0; i < count; i++) {
       const seed = (i * 37 + si * 13) % 100;
-      const h = 26 + (seed % 60) + (si * 4); // taller as empire grows
-      const w = 16 + (seed % 10);
-      const L = st.night ? 22 + (seed % 12) : 42 + (seed % 14);
-      const bg = `hsl(${st.tone + (seed % 25)} ${st.night ? 40 : 24}% ${L}%)`;
+      const h = Math.max(24, Math.round((44 + (seed % 52)) * eraScale)); // % of band
+      const grow = (7 + (seed % 8)) / 10; // slight width variance
+      const L = st.night ? 20 + (seed % 12) : 40 + (seed % 14);
+      const bg = `hsl(${st.tone + (seed % 25)} ${st.night ? 42 : 26}% ${L}%)`;
+      const roof = `hsl(${st.tone + (seed % 25)} ${st.night ? 42 : 26}% ${L + 7}%)`;
       let wins = "";
-      const rows = Math.max(1, Math.floor(h / 12));
+      const rows = Math.max(1, Math.round(h / 14));
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < 3; c++) {
-          const on = st.night && (seed + r * 3 + c) % 3 !== 0;
+          const on = st.night ? (seed + r * 3 + c) % 3 !== 0 : (seed + r + c) % 4 === 0;
           wins += `<i class="w${on ? " on" : ""}"></i>`;
         }
       }
-      buildings += `<div class="bld" style="height:${h}px;width:${w}px;background:${bg}"><div class="wins">${wins}</div></div>`;
+      buildings += `<div class="bld" style="height:${h}%;flex-grow:${grow};background:linear-gradient(180deg,${roof},${bg})"><div class="wins">${wins}</div></div>`;
     }
 
-    // foreground props scale with detail
-    const propCount = 1 + detail;
+    // Foreground props: a lively row standing ON the ground (grows w/ detail).
+    const propCount = Math.min(7, 3 + detail);
     let props = "";
     for (let i = 0; i < propCount; i++) {
-      const emoji = i === 0 ? st.props : st.people;
-      const delay = (i * 0.4).toFixed(1);
-      const left = 6 + (i * 88) / Math.max(1, propCount);
-      props += `<span class="prop" style="left:${left}%;animation-delay:${delay}s">${emoji}</span>`;
+      const emoji = i % 2 === 0 ? st.props : st.people;
+      const delay = ((i % 4) * 0.35).toFixed(2);
+      props += `<span class="prop" style="animation-delay:${delay}s">${emoji}</span>`;
     }
 
-    const stars = st.space
-      ? '<div class="stars">✦ · ✦ ·· ✧ · ✦ ·· ✧ · ✦ · ✧ ·· ✦</div>'
-      : st.night
-        ? '<div class="stars dim">· · ✦ ·· · ✦ · ·· · ✦ ··</div>'
-        : '<div class="sun">☀️</div>';
+    // Sky: sun + drifting clouds (day) · moon + stars (night) · stars (space).
+    let sky;
+    if (st.space) {
+      sky = '<div class="stars">✦ ·· ✧ · ✦ ·· ✧ ·· ✦ · ✧ ·· ✦ · ✧</div><span class="moon">🪐</span>';
+    } else if (st.night) {
+      sky = '<div class="stars dim">· ✦ ·· · ✦ ·· ✦ · ·· ✦ ·· ✦ ·</div><span class="moon">🌙</span>';
+    } else {
+      sky = '<span class="sun">☀️</span><span class="cloud c1">☁️</span><span class="cloud c2">☁️</span>';
+    }
 
     towerEl.innerHTML =
-      stars +
+      sky +
       `<div class="skyline">${buildings}</div>` +
+      `<div class="ground" style="background:${st.ground}"></div>` +
       `<div class="fg">${props}</div>` +
       `<div class="scene-label">${st.name}</div>`;
 

@@ -130,52 +130,69 @@ body {
 }
 .scene {
   position: relative;
-  height: clamp(124px, 20vh, 172px);
+  height: clamp(150px, 23vh, 196px);
   transition: background 1.2s var(--ease);
   overflow: hidden;
 }
+/* ground plane — buildings & props stand on it */
+.scene .ground {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 26%;
+  z-index: 2;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.14), inset 0 -40px 40px rgba(0, 0, 0, 0.18);
+}
+/* skyline rises from just behind the ground's front edge */
 .scene .skyline {
   position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 78%;
+  left: 0; right: 0; bottom: 23%;
+  height: 60%;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 4px;
-  padding: 0 8px;
+  gap: 1.5%;
+  padding: 0 4%;
+  z-index: 1;
 }
 .scene .bld {
   position: relative;
+  flex: 1 1 0;
+  min-width: 12px;
+  max-width: 46px;
   border-radius: 3px 3px 0 0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.2), inset 1px 0 0 rgba(255, 255, 255, 0.06);
   transition: height 0.8s var(--ease);
 }
 .scene .wins {
   position: absolute;
-  inset: 5px 3px 0 3px;
+  inset: 14% 22% 8% 22%;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2px;
-  align-content: start;
+  gap: 2px 3px;
+  align-content: stretch;
 }
 .scene .w {
   width: 100%;
-  aspect-ratio: 1;
-  max-height: 4px;
-  background: rgba(255, 255, 255, 0.06);
+  min-height: 2px;
+  background: rgba(255, 255, 255, 0.05);
   border-radius: 1px;
 }
-.scene .w.on { background: var(--gold); box-shadow: 0 0 4px rgba(255, 207, 74, 0.7); }
+.scene .w.on { background: var(--gold); box-shadow: 0 0 4px rgba(255, 207, 74, 0.75); }
+/* foreground props standing on the ground */
 .scene .fg {
   position: absolute;
-  bottom: 4px; left: 0; right: 0;
-  height: 40px;
+  left: 0; right: 0; bottom: 0;
+  height: 26%;
+  z-index: 3;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-evenly;
+  padding: 0 6% 5px;
 }
 .scene .prop {
-  position: absolute;
-  bottom: 0;
-  font-size: 22px;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+  font-size: clamp(22px, 6.5vmin, 34px);
+  line-height: 1;
+  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.4));
   animation: bob 3s ease-in-out infinite;
 }
 @keyframes bob {
@@ -184,22 +201,46 @@ body {
 }
 .scene .sun {
   position: absolute;
-  top: 14px; right: 22px;
-  font-size: 30px;
-  animation: bob 5s ease-in-out infinite;
+  top: 9%; right: 8%;
+  font-size: clamp(26px, 7vmin, 40px);
+  filter: drop-shadow(0 0 16px rgba(255, 210, 120, 0.85));
+  animation: bob 6s ease-in-out infinite;
+  z-index: 0;
+}
+.scene .moon {
+  position: absolute;
+  top: 10%; right: 9%;
+  font-size: clamp(24px, 6vmin, 36px);
+  filter: drop-shadow(0 0 14px rgba(180, 200, 255, 0.6));
+  z-index: 0;
+}
+.scene .cloud {
+  position: absolute;
+  font-size: clamp(22px, 6vmin, 34px);
+  opacity: 0.92;
+  z-index: 0;
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.08));
+}
+.scene .cloud.c1 { top: 13%; left: 8%; animation: drift 16s ease-in-out infinite; }
+.scene .cloud.c2 { top: 30%; left: 44%; animation: drift 22s ease-in-out infinite; animation-delay: -7s; }
+@keyframes drift {
+  0%, 100% { transform: translateX(-8%); }
+  50% { transform: translateX(34%); }
 }
 .scene .stars {
   position: absolute;
-  top: 12px; left: 0; right: 0;
+  top: 11%; left: 0; right: 0;
   text-align: center;
   color: rgba(255, 255, 255, 0.75);
   letter-spacing: 5px;
-  font-size: 12px;
+  font-size: clamp(11px, 3vmin, 14px);
+  z-index: 0;
 }
-.scene .stars.dim { color: rgba(255, 255, 255, 0.35); }
+.scene .stars.dim { color: rgba(255, 255, 255, 0.4); }
 .scene .scene-label {
   position: absolute;
   top: 10px; left: 12px;
+  z-index: 4;
   font-size: 12px;
   font-weight: 800;
   color: #fff;
