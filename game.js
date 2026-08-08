@@ -2,21 +2,38 @@
 (() => {
   "use strict";
 
-  // ── Generator definitions (theme: escalating AI money bots) ──
+  // ── Locale (English default; Korean when the browser or a saved pref says so) ──
+  const LANG_KEY = "afkinc_lang";
+  function resolveLang() {
+    try {
+      const s = localStorage.getItem(LANG_KEY);
+      if (s === "en" || s === "ko") return s;
+    } catch (_) {
+      /* storage blocked */
+    }
+    const n = (navigator.language || "en").toLowerCase();
+    return n.startsWith("ko") ? "ko" : "en";
+  }
+  const LANG = resolveLang();
+  const L = (window.AFK_T && window.AFK_T[LANG]) || (window.AFK_T && window.AFK_T.en) || {};
+  const CUR = L.cur || "$";
+
+  // ── Generator definitions (icons/economy; names come from the locale) ──
   const GEN = [
-    { icon: "🧑‍💻", name: "클릭 알바",     baseCost: 10,      rate: 1 },
-    { icon: "🤖", name: "자동 봇",       baseCost: 120,     rate: 9 },
-    { icon: "🕷️", name: "스크래퍼",      baseCost: 1400,    rate: 55 },
-    { icon: "📈", name: "트레이딩 봇",    baseCost: 15000,   rate: 320 },
-    { icon: "🏭", name: "콘텐츠 공장",    baseCost: 170000,  rate: 1800 },
-    { icon: "🧠", name: "AI 에이전트 팀", baseCost: 2000000, rate: 10500 },
-    { icon: "🗄️", name: "데이터센터",    baseCost: 26000000, rate: 62000 },
-    { icon: "🚀", name: "자율 스타트업",  baseCost: 380000000, rate: 380000 },
-    { icon: "🏢", name: "AI 자회사",      baseCost: 5500000000, rate: 2400000 },
-    { icon: "🌌", name: "특이점 엔진",    baseCost: 82000000000, rate: 16000000 },
-    { icon: "🌐", name: "멀티버스 팜",    baseCost: 1200000000000, rate: 110000000 },
-    { icon: "⏳", name: "시간 루프 공장",  baseCost: 18000000000000, rate: 720000000 },
+    { icon: "🧑‍💻", baseCost: 10,      rate: 1 },
+    { icon: "🤖", baseCost: 120,     rate: 9 },
+    { icon: "🕷️", baseCost: 1400,    rate: 55 },
+    { icon: "📈", baseCost: 15000,   rate: 320 },
+    { icon: "🏭", baseCost: 170000,  rate: 1800 },
+    { icon: "🧠", baseCost: 2000000, rate: 10500 },
+    { icon: "🗄️", baseCost: 26000000, rate: 62000 },
+    { icon: "🚀", baseCost: 380000000, rate: 380000 },
+    { icon: "🏢", baseCost: 5500000000, rate: 2400000 },
+    { icon: "🌌", baseCost: 82000000000, rate: 16000000 },
+    { icon: "🌐", baseCost: 1200000000000, rate: 110000000 },
+    { icon: "⏳", baseCost: 18000000000000, rate: 720000000 },
   ];
+  const genName = (i) => (L.gen && L.gen[i]) || "";
   const COST_MULT = 1.15;
   const MILESTONES = [10, 25, 50, 100, 150, 200, 300, 400, 500, 750, 1000];
   const SAVE_KEY = "afkinc_save_v1";
@@ -42,36 +59,14 @@
     onboarded: false, // first-session guided loop shown?
   };
 
-  // ── Upgrade definitions (money sinks with real choices) ────
+  // ── Upgrade definitions (labels come from the locale; val → display value) ──
   const UPGRADES = [
-    {
-      id: "click",
-      icon: "👆",
-      name: "클릭 강화",
-      max: 12,
-      cost: (l) => 800 * Math.pow(7, l),
-      cur: () => `클릭 ×${fmt(Math.pow(2, state.up.click))}`,
-      next: () => `클릭 ×${fmt(Math.pow(2, state.up.click + 1))}`,
-    },
-    {
-      id: "income",
-      icon: "⚡",
-      name: "전체 수익 증폭",
-      max: 20,
-      cost: (l) => 5000 * Math.pow(11, l),
-      cur: () => `수익 ×${Math.pow(1.6, state.up.income).toFixed(2)}`,
-      next: () => `수익 ×${Math.pow(1.6, state.up.income + 1).toFixed(2)}`,
-    },
-    {
-      id: "offline",
-      icon: "😴",
-      name: "오프라인 효율",
-      max: 5,
-      cost: (l) => 20000 * Math.pow(14, l),
-      cur: () => `오프라인 ${Math.round((0.5 + 0.1 * state.up.offline) * 100)}%`,
-      next: () => `오프라인 ${Math.round((0.5 + 0.1 * (state.up.offline + 1)) * 100)}%`,
-    },
+    { id: "click", icon: "👆", max: 12, cost: (l) => 800 * Math.pow(7, l), val: (l) => fmt(Math.pow(2, l)) },
+    { id: "income", icon: "⚡", max: 20, cost: (l) => 5000 * Math.pow(11, l), val: (l) => Math.pow(1.6, l).toFixed(2) },
+    { id: "offline", icon: "😴", max: 5, cost: (l) => 20000 * Math.pow(14, l), val: (l) => Math.round((0.5 + 0.1 * l) * 100) },
   ];
+  const upName = (id) => (L.up && L.up[id] && L.up[id].name) || id;
+  const upFmt = (id, v) => (L.up && L.up[id] ? L.up[id].fmt(v) : String(v));
   const AUTOBUY_COST = 1000000;
 
   // ── Rewarded-ad boost (native idle monetization) ───────────
@@ -314,14 +309,14 @@
     toast(text, icon);
   }
   function checkMoneyAchievements() {
-    if (state.lifetimeEarned >= 1e6) achieve("m1", "첫 ₩1M 돌파!", "💵");
-    if (state.lifetimeEarned >= 1e9) achieve("m1b", "억만장자 ₩1B 돌파!", "🤑");
-    if (state.lifetimeEarned >= 1e12) achieve("m1t", "조 단위 ₩1T 돌파!", "👑");
-    if (state.lifetimeEarned >= 1e15) achieve("m1q", "경 단위 ₩1000T!", "🌟");
+    if (state.lifetimeEarned >= 1e6) achieve("m1", L.tM1, "💵");
+    if (state.lifetimeEarned >= 1e9) achieve("m1b", L.tM1b, "🤑");
+    if (state.lifetimeEarned >= 1e12) achieve("m1t", L.tM1t, "👑");
+    if (state.lifetimeEarned >= 1e15) achieve("m1q", L.tM1q, "🌟");
     const tb = totalBots();
-    if (tb >= 50) achieve("b50", "봇 50기 보유", "🤖");
-    if (tb >= 200) achieve("b200", "봇 200기 — 자동화 제국", "🏭");
-    if (tb >= 500) achieve("b500", "봇 500기 — 특이점 임박", "🌌");
+    if (tb >= 50) achieve("b50", L.tB50, "🤖");
+    if (tb >= 200) achieve("b200", L.tB200, "🏭");
+    if (tb >= 500) achieve("b500", L.tB500, "🌌");
   }
 
   // ── Actions ────────────────────────────────────────────────
@@ -340,7 +335,7 @@
     Sfx.init();
     const v = clickValue();
     addMoney(v);
-    spawnFloat(e, "+₩" + fmt(v));
+    spawnFloat(e, "+" + CUR + fmt(v));
     Sfx.click();
     moneyEl.classList.remove("pop");
     void moneyEl.offsetWidth; // restart animation
@@ -365,22 +360,21 @@
       [{ transform: "scale(1)" }, { transform: "scale(1.03)" }, { transform: "scale(1)" }],
       { duration: 180, easing: "ease-out" },
     );
-    achieve("first_bot", "첫 봇 고용! 이제 자동으로 벌어요", "🤖");
+    achieve("first_bot", L.tFirstBot, "🤖");
 
     if (after > before) {
       cards[i].el.classList.remove("flash");
       void cards[i].el.offsetWidth;
       cards[i].el.classList.add("flash");
       Sfx.milestone();
-      toast(`${GEN[i].name} ×2 배수 달성!`, "✨");
+      toast(L.tGenX2(genName(i)), "✨");
     }
   }
 
   function prestige() {
     const gain = prestigePotential();
     if (gain <= 0) return;
-    if (!confirm(`특이점 코인 ${gain}개를 얻고 리셋할까요?\n(영구히 모든 수익 +${gain * 2}%)`))
-      return;
+    if (!confirm(L.confirmPrestige(gain))) return;
     state.pp += gain;
     state.prestigeCount = (state.prestigeCount || 0) + 1;
     state.money = 0;
@@ -389,9 +383,9 @@
     state.gens = GEN.map(() => ({ owned: 0, revealed: false }));
     state.up = { click: 0, income: 0, offline: 0 };
     Sfx.prestige();
-    toast(`특이점 리셋! 영구 수익 +${state.pp * 2}%`, "🌌");
-    achieve("p1", "첫 특이점 돌파", "🌌");
-    if (state.prestigeCount >= 5) achieve("p5", "특이점 5회 — 초월자", "✨");
+    toast(L.tPrestige(state.pp), "🌌");
+    achieve("p1", L.tPrestige1, "🌌");
+    if (state.prestigeCount >= 5) achieve("p5", L.tPrestige5, "✨");
     save();
     Ads.interstitial(); // natural break — show a midgame ad
   }
@@ -404,8 +398,8 @@
     state.money -= cost;
     state.up[u.id] = lvl + 1;
     Sfx.milestone();
-    toast(`${u.name} 강화! (Lv.${lvl + 1})`, u.icon);
-    if (lvl + 1 >= u.max) achieve("max_" + u.id, `${u.name} 최대 강화!`, "⭐");
+    toast(L.tUpgraded(upName(u.id), lvl + 1), u.icon);
+    if (lvl + 1 >= u.max) achieve("max_" + u.id, L.tUpMaxed(upName(u.id)), "⭐");
   }
 
   function buyAutobuy() {
@@ -414,8 +408,8 @@
     state.autobuy = true;
     state.autobuyOn = true;
     Sfx.milestone();
-    toast("자동 구매기 가동! 이제 알아서 봇을 삽니다", "⚙️");
-    achieve("autobuy", "자동화 시대 개막", "⚙️");
+    toast(L.tAutobuyOn, "⚙️");
+    achieve("autobuy", L.tAutobuyAch, "⚙️");
   }
 
   function runAutobuy() {
@@ -486,9 +480,9 @@
     if (gain <= 0) return;
     addMoney(gain);
     lastOfflineGain = gain; // doublable via rewarded ad
-    offlineEarnedEl.textContent = "₩" + fmt(gain);
+    offlineEarnedEl.textContent = CUR + fmt(gain);
     const mins = Math.floor(dt / 60);
-    offlineTextEl.textContent = `자리 비운 ${mins}분 동안 AI가 벌어둔 금액이에요. (효율 ${Math.round(offlineEff() * 100)}%)`;
+    offlineTextEl.textContent = L.offlineText(mins, Math.round(offlineEff() * 100));
     if (offlineDoubleBtn) offlineDoubleBtn.classList.remove("hidden");
     offlineModal.classList.remove("hidden");
   }
@@ -515,7 +509,7 @@
   const titleNoteEl = document.getElementById("titleNote");
   const boostBtn = document.getElementById("boostBtn");
   const boostBar = document.getElementById("boostBar");
-  const boostTimeEl = document.getElementById("boostTime");
+  const boostLabelEl = document.getElementById("boostLabel");
   const boostProgEl = document.getElementById("boostProg");
   const offlineDoubleBtn = document.getElementById("offlineDoubleBtn");
 
@@ -540,18 +534,20 @@
       el.innerHTML = `
         <div class="icon">${g.icon}</div>
         <div class="info">
-          <div class="name">${g.name}</div>
+          <div class="name"></div>
           <div class="meta"></div>
           <div class="prog"><span></span></div>
         </div>
         <div class="buy">
           <div class="owned num">0</div>
-          <div class="cost num">₩0</div>
+          <div class="cost num"></div>
         </div>`;
+      el.querySelector(".name").textContent = genName(i);
       el.addEventListener("click", () => buy(i));
       gensEl.appendChild(el);
       cards.push({
         el,
+        name: el.querySelector(".name"),
         meta: el.querySelector(".meta"),
         prog: el.querySelector(".prog > span"),
         owned: el.querySelector(".owned"),
@@ -572,7 +568,7 @@
     UPGRADES.forEach((u) => {
       const el = document.createElement("div");
       el.className = "gen up";
-      el.innerHTML = upCardMarkup(u.icon, u.name);
+      el.innerHTML = upCardMarkup(u.icon, upName(u.id));
       el.addEventListener("click", () => buyUp(u));
       upsEl.appendChild(el);
       upCards.push({
@@ -584,7 +580,7 @@
     });
     const el = document.createElement("div");
     el.className = "gen up";
-    el.innerHTML = upCardMarkup("⚙️", "자동 구매기");
+    el.innerHTML = upCardMarkup("⚙️", L.autobuyName);
     el.addEventListener("click", () => {
       if (!state.autobuy) buyAutobuy();
       else {
@@ -606,7 +602,8 @@
       const c = upCards[i];
       const lvl = state.up[u.id];
       const maxed = lvl >= u.max;
-      c.meta.textContent = maxed ? u.cur() : `${u.cur()} → ${u.next()}`;
+      const cur = upFmt(u.id, u.val(lvl));
+      c.meta.textContent = maxed ? cur : `${cur} → ${upFmt(u.id, u.val(lvl + 1))}`;
       c.owned.textContent = "Lv." + lvl + (maxed ? "" : "/" + u.max);
       if (maxed) {
         c.cost.textContent = "MAX";
@@ -614,24 +611,22 @@
         c.el.classList.remove("afford");
       } else {
         const cost = u.cost(lvl);
-        c.cost.textContent = "₩" + fmt(cost);
+        c.cost.textContent = CUR + fmt(cost);
         c.el.classList.toggle("afford", state.money >= cost);
         c.el.classList.remove("maxed");
       }
     });
     const a = autobuyCard;
     if (!state.autobuy) {
-      a.meta.textContent = "봇을 자동으로 구매 (프레스티지해도 유지)";
+      a.meta.textContent = L.autobuyMetaBuy;
       a.owned.textContent = "";
-      a.cost.textContent = "₩" + fmt(AUTOBUY_COST);
+      a.cost.textContent = CUR + fmt(AUTOBUY_COST);
       a.el.classList.toggle("afford", state.money >= AUTOBUY_COST);
       a.el.classList.remove("maxed");
     } else {
-      a.meta.textContent = state.autobuyOn
-        ? "가장 싼 봇부터 자동 구매 중"
-        : "정지됨 — 탭하여 재가동";
+      a.meta.textContent = state.autobuyOn ? L.autobuyMetaOn : L.autobuyMetaOff;
       a.owned.textContent = state.autobuyOn ? "ON" : "OFF";
-      a.cost.textContent = state.autobuyOn ? "탭하여 끄기" : "탭하여 켜기";
+      a.cost.textContent = state.autobuyOn ? L.autobuyTapOff : L.autobuyTapOn;
       a.el.classList.remove("afford");
       a.el.classList.add("maxed");
     }
@@ -720,13 +715,13 @@
       `<div class="skyline">${buildings}</div>` +
       `<div class="ground" style="background:${st.ground}"></div>` +
       `<div class="fg">${props}</div>` +
-      `<div class="scene-label">${st.name}</div>`;
+      `<div class="scene-label">${L.stage[si]}</div>`;
 
     if (grew) {
-      toast(`사업 성장: ${st.name}!`, st.props.slice(0, 2));
+      toast(L.tBizGrew(L.stage[si]), st.props.slice(0, 2));
       Sfx.milestone();
-      if (si >= 5) achieve("biz_corp", "대기업 반열에 오르다", "🏙️");
-      if (si >= 8) achieve("biz_space", "우주로 진출한 기업", "🚀");
+      if (si >= 5) achieve("biz_corp", L.tBizCorp, "🏙️");
+      if (si >= 8) achieve("biz_space", L.tBizSpace, "🚀");
     }
   }
 
@@ -738,17 +733,15 @@
 
   function render() {
     moneyEl.textContent = fmt(state.money);
-    persecEl.textContent = "₩" + fmt(totalRate()) + " / 초";
-    clickValEl.textContent = "클릭당 +₩" + fmt(clickValue());
-    ppOwnedEl.textContent = "특이점 코인 " + state.pp;
+    persecEl.textContent = L.perSec(fmt(totalRate()));
+    clickValEl.textContent = L.perTap(fmt(clickValue()));
+    ppOwnedEl.textContent = L.coins(state.pp);
 
     const pot = prestigePotential();
     prestigeBtn.disabled = pot <= 0;
-    prestigeBtn.textContent = pot > 0 ? `리셋하고 +${pot} 코인 획득` : "리셋 불가 (더 벌어야 함)";
+    prestigeBtn.textContent = pot > 0 ? L.prestigeBtnReady(pot) : L.prestigeBtnLocked;
     prestigeInfo.textContent =
-      pot > 0
-        ? `지금 리셋하면 특이점 코인 ${pot}개 → 영구 수익 +${pot * 2}%`
-        : `₩${fmt(1e9)} 이상 벌면 리셋 가능. 현재 보너스 +${state.pp * 2}%`;
+      pot > 0 ? L.prestigeInfoReady(pot) : L.prestigeInfoLocked(state.pp, CUR + fmt(1e9));
 
     for (let i = 0; i < GEN.length; i++) {
       const g = state.gens[i];
@@ -756,14 +749,14 @@
       const prevOwned = i === 0 ? 1 : state.gens[i - 1].owned;
       if (!g.revealed && (g.owned > 0 || state.money >= GEN[i].baseCost * 0.5 || prevOwned > 0)) {
         g.revealed = true;
-        if (i > 0) toast(`새 수익원 해금: ${GEN[i].name}`, GEN[i].icon);
+        if (i > 0) toast(L.revealToast(genName(i)), GEN[i].icon);
       }
 
       if (!g.revealed) {
         c.el.classList.add("locked");
         c.owned.textContent = "🔒";
-        c.cost.textContent = "₩" + fmt(GEN[i].baseCost);
-        c.meta.textContent = "잠김";
+        c.cost.textContent = CUR + fmt(GEN[i].baseCost);
+        c.meta.textContent = L.locked;
         c.prog.style.width = "0%";
         continue;
       }
@@ -775,15 +768,15 @@
       c.el.classList.toggle("afford", afford);
 
       c.owned.textContent = g.owned;
-      c.cost.textContent = (n > 1 ? `×${n}  ` : "") + "₩" + fmt(cost);
-      c.meta.textContent = `초당 +₩${fmt(genRate(i))}  ·  개당 ₩${fmt(GEN[i].rate)}`;
+      c.cost.textContent = (n > 1 ? `×${n}  ` : "") + CUR + fmt(cost);
+      c.meta.textContent = L.genMeta(fmt(genRate(i)), fmt(GEN[i].rate));
 
       const nm = nextMilestone(g.owned);
       if (nm) {
         const prev = MILESTONES.filter((t) => t <= g.owned).pop() || 0;
         const p = ((g.owned - prev) / (nm - prev)) * 100;
         c.prog.style.width = Math.max(0, Math.min(100, p)) + "%";
-        c.meta.textContent += `  ·  다음 ×2: ${g.owned}/${nm}`;
+        c.meta.textContent += L.genNext(g.owned, nm);
       } else {
         c.prog.style.width = "100%";
       }
@@ -800,7 +793,7 @@
       const remain = boostUntil - Date.now();
       boostBtn.classList.add("hidden");
       boostBar.classList.remove("hidden");
-      if (boostTimeEl) boostTimeEl.textContent = Math.ceil(remain / 1000);
+      if (boostLabelEl) boostLabelEl.textContent = L.boostActive(Math.ceil(remain / 1000));
       if (boostProgEl) boostProgEl.style.width = Math.max(0, (remain / BOOST_MS) * 100) + "%";
     } else {
       boostBtn.classList.remove("hidden");
@@ -869,7 +862,7 @@
         this.dim([r.hud, r.scene, r.boostBtn, r.boostBar, r.buymode, r.gensPanel, r.upsPanel, r.prestige, r.foot]);
         if (r.clicker) r.clicker.classList.add("coach-focus");
         this.putFinger(r.clicker, "👆");
-        r.text.textContent = "여기를 탭해서 돈을 벌어보세요!";
+        r.text.textContent = L.coach1;
       } else if (n === 2) {
         this.dim([r.hud, r.scene, r.clickerWrap, r.boostBtn, r.boostBar, r.buymode, r.upsPanel, r.prestige, r.foot]);
         if (r.firstGen) {
@@ -877,9 +870,9 @@
           this.putFinger(r.firstGen, "👆");
           r.firstGen.scrollIntoView({ block: "center" });
         }
-        r.text.textContent = "첫 봇을 고용하세요 — 자리를 비워도 자동으로 벌어줘요!";
+        r.text.textContent = L.coach2;
       } else if (n === 3) {
-        r.text.textContent = "완성! 봇이 알아서 돈을 벌어둬요 💰 더 사서 제국을 키워보세요";
+        r.text.textContent = L.coach3;
         setTimeout(() => this.finish(), 3800);
       }
     },
@@ -938,10 +931,10 @@
         () => {
           boostUntil = Date.now() + BOOST_MS;
           Sfx.milestone();
-          toast("2배 부스터 발동! 60초 동안 수익 2배", "🔥");
+          toast(L.tBoostOn, "🔥");
           renderBoost();
         },
-        { onFail: () => toast("광고를 불러오지 못했어요. 잠시 후 다시 시도해요", "⚠️") },
+        { onFail: () => toast(L.tAdFailBoost, "⚠️") },
       );
     });
   }
@@ -957,10 +950,10 @@
         () => {
           addMoney(bonus);
           Sfx.milestone();
-          toast("오프라인 수익 2배 획득! +₩" + fmt(bonus), "💰");
+          toast(L.tOfflineDoubled(fmt(bonus)), "💰");
           offlineModal.classList.add("hidden");
         },
-        { onFail: () => toast("광고를 불러오지 못했어요. '그냥 받기'로 진행해요", "⚠️") },
+        { onFail: () => toast(L.tAdFailOffline, "⚠️") },
       );
     });
   }
@@ -996,9 +989,34 @@
     });
   });
 
+  // Populate all static [data-t] strings from the active locale.
+  function applyStaticText() {
+    document.documentElement.lang = LANG;
+    document.querySelectorAll("[data-t]").forEach((el) => {
+      const v = L[el.dataset.t];
+      if (v != null) el.innerHTML = v;
+    });
+  }
+
+  // Language toggle — persist choice, save progress, reload with new locale.
+  const langBtn = document.getElementById("langBtn");
+  if (langBtn) {
+    langBtn.textContent = LANG === "en" ? "한" : "EN";
+    langBtn.addEventListener("click", () => {
+      try {
+        localStorage.setItem(LANG_KEY, LANG === "en" ? "ko" : "en");
+      } catch (_) {
+        /* storage blocked — ignore */
+      }
+      save();
+      location.reload();
+    });
+  }
+
   // ── Boot ───────────────────────────────────────────────────
   Ads.init(); // async, non-blocking — enables real ads on CrazyGames
   load();
+  applyStaticText();
   buildCards();
   buildUps();
   // restore buy-mode UI
@@ -1009,11 +1027,11 @@
   // Title screen: continue vs new. Offline earnings are granted on Start.
   if (startBtn) {
     if (state.lifetimeEarned > 0) {
-      startBtn.textContent = "이어하기";
-      titleNoteEl.textContent = `순자산 ₩${fmt(state.money)} · 특이점 코인 ${state.pp}`;
+      startBtn.textContent = L.startContinue;
+      titleNoteEl.textContent = L.noteContinue(fmt(state.money), state.pp);
     } else {
-      startBtn.textContent = "시작하기";
-      titleNoteEl.textContent = "첫 봇을 고용해 제국을 시작하세요";
+      startBtn.textContent = L.startNew;
+      titleNoteEl.textContent = L.noteNew;
     }
   }
   render();

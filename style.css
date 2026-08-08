@@ -98,6 +98,8 @@ body {
 }
 .persec { margin-top: 4px; color: var(--green); font-size: 13px; font-weight: 600; }
 .hud-right { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.hud-btns { display: flex; gap: 8px; }
+.mute.lang { font-size: 13px; font-weight: 800; letter-spacing: 0.02em; }
 .pp {
   font-size: 11px;
   font-weight: 700;
@@ -326,7 +328,7 @@ body {
 }
 .boost:active { transform: scale(0.98); }
 .boost .boost-ic { font-size: 18px; }
-.boost .boost-tx b { color: var(--green); }
+.boost b { color: var(--green); }
 .boost:hover { box-shadow: 0 6px 18px rgba(70, 229, 160, 0.2); }
 
 .boost-active {

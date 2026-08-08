@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0b0d1a" />
-  <title>AFK 주식회사 — 방치형 AI 제국</title>
-  <meta name="description" content="첫 봇을 고용해 방치하는 사이 AI가 돈을 법니다. 클릭 한 번으로 시작하는 방치형 머니 게임." />
+  <title>AFK Inc. — Idle AI Empire</title>
+  <meta name="description" content="Hire AI bots and let them earn money while you're away. A cozy idle/clicker tycoon: tap, automate, prestige — from a street stall to a spacefaring empire." />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -13,8 +13,8 @@
   <div id="title" class="title">
     <div class="title-inner">
       <div class="title-badge">IDLE · AI · EMPIRE</div>
-      <h1 class="title-logo">AFK<br /><span>주식회사</span></h1>
-      <p class="title-tag">방치하는 사이, AI가 당신의 돈을 법니다.</p>
+      <h1 class="title-logo">AFK<br /><span data-t="logoSub">주식회사</span></h1>
+      <p class="title-tag" data-t="tagline">방치하는 사이, AI가 당신의 돈을 법니다.</p>
       <button id="startBtn" class="start-btn">시작하기</button>
       <p id="titleNote" class="title-note">첫 봇을 고용해 제국을 시작하세요</p>
     </div>
@@ -29,14 +29,17 @@
     <header class="hud">
       <div class="hud-left">
         <div class="money-row">
-          <span class="won">₩</span>
+          <span class="won" data-t="cur">₩</span>
           <span id="money" class="money">0</span>
         </div>
-        <div id="persec" class="persec">₩0 / 초</div>
+        <div id="persec" class="persec"></div>
       </div>
       <div class="hud-right">
-        <div id="ppOwned" class="pp">특이점 코인 0</div>
-        <button id="mute" class="mute" aria-label="음소거 토글">🔊</button>
+        <div id="ppOwned" class="pp"></div>
+        <div class="hud-btns">
+          <button id="langBtn" class="mute lang" aria-label="Language">EN</button>
+          <button id="mute" class="mute" aria-label="mute">🔊</button>
+        </div>
       </div>
     </header>
 
@@ -48,27 +51,26 @@
         </section>
 
         <section class="clicker-wrap">
-          <button id="clicker" class="clicker" aria-label="돈 벌기">
+          <button id="clicker" class="clicker" aria-label="earn money">
             <span class="clicker-emoji">💰</span>
-            <span class="clicker-label">탭해서 벌기</span>
+            <span class="clicker-label" data-t="clickerLabel">탭해서 벌기</span>
           </button>
-          <div id="clickval" class="clickval">클릭당 +₩1</div>
+          <div id="clickval" class="clickval"></div>
         </section>
 
         <!-- Rewarded boost -->
-        <button id="boostBtn" class="boost" type="button">
-          <span class="boost-ic">📺</span>
-          <span class="boost-tx">광고 보고 <b>2배 부스터</b> (60초)</span>
+        <button id="boostBtn" class="boost" type="button" data-t="boostBtn">
+          📺 광고 보고 <b>2배 부스터</b> (60초)
         </button>
         <div id="boostBar" class="boost-active hidden">
-          <div class="boost-active-tx">🔥 2배 부스터 <span id="boostTime">60</span>초</div>
+          <div class="boost-active-tx" id="boostLabel"></div>
           <div class="boost-prog"><span id="boostProg"></span></div>
         </div>
       </section>
 
       <!-- Shop: buy mode + generators + upgrades + prestige (right panel on desktop) -->
       <section class="shop">
-        <div class="buymode" role="group" aria-label="구매 수량">
+        <div class="buymode" role="group" aria-label="buy quantity">
           <button data-mode="1" class="on">×1</button>
           <button data-mode="10">×10</button>
           <button data-mode="100">×100</button>
@@ -76,24 +78,24 @@
         </div>
 
         <section class="panel" id="gensPanel">
-          <h2 class="panel-h">수익원</h2>
+          <h2 class="panel-h" data-t="panelBiz">수익원</h2>
           <div id="gens" class="list"></div>
         </section>
 
         <section class="panel" id="upsPanel">
-          <h2 class="panel-h">강화 · 자동화</h2>
+          <h2 class="panel-h" data-t="panelUpg">강화 · 자동화</h2>
           <div id="ups" class="list"></div>
         </section>
 
         <section class="panel prestige-panel">
-          <h2 class="panel-h">🌌 특이점 리셋</h2>
-          <p id="prestigeInfo" class="prestige-info">₩1B 이상 벌면 리셋 가능.</p>
-          <button id="prestigeBtn" class="prestige-btn" disabled>리셋 불가</button>
+          <h2 class="panel-h" data-t="panelPrestige">🌌 특이점 리셋</h2>
+          <p id="prestigeInfo" class="prestige-info"></p>
+          <button id="prestigeBtn" class="prestige-btn" disabled></button>
         </section>
       </section>
     </div>
 
-    <footer class="foot">© AFK 주식회사 · 방치형 머니 게임</footer>
+    <footer class="foot" data-t="foot">© AFK 주식회사 · 방치형 머니 게임</footer>
   </main>
 
   <!-- Onboarding coach (populated by JS on first play) -->
@@ -101,22 +103,23 @@
     <div class="coach-bubble">
       <span id="coachText" class="coach-text"></span>
     </div>
-    <button id="coachSkip" class="coach-skip" type="button">건너뛰기</button>
+    <button id="coachSkip" class="coach-skip" type="button" data-t="coachSkip">건너뛰기</button>
   </div>
 
   <!-- Offline earnings modal -->
   <div id="offlineModal" class="modal hidden">
     <div class="modal-card">
       <div class="modal-emoji">😴💰</div>
-      <h3 class="modal-title">돌아온 사이 벌었어요!</h3>
+      <h3 class="modal-title" data-t="offlineTitle">돌아온 사이 벌었어요!</h3>
       <div id="offlineEarned" class="modal-amount">₩0</div>
       <p id="offlineText" class="modal-text"></p>
-      <button id="offlineDoubleBtn" class="modal-ad">📺 광고 보고 <b>2배</b>로 받기</button>
-      <button id="offlineOk" class="modal-ok">그냥 받기</button>
+      <button id="offlineDoubleBtn" class="modal-ad" data-t="offlineDoubleBtn">📺 광고 보고 <b>2배</b>로 받기</button>
+      <button id="offlineOk" class="modal-ok" data-t="offlineOk">그냥 받기</button>
     </div>
   </div>
 
   <script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>
+  <script src="i18n.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

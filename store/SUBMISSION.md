@@ -10,7 +10,7 @@ GitHub: https://github.com/wjddytpq27/afk-inc-idle
 ### 준비된 자산
 | 항목 | 파일 | 규격 |
 |------|------|------|
-| 게임 빌드 | `afk-inc-crazygames.zip` | index.html 루트, 상대경로, SDK 통합 완료 |
+| 게임 빌드 | `afk-inc-crazygames.zip` | index.html+style.css+game.js+i18n.js, 루트, 상대경로, SDK 통합 완료 |
 | 커버(가로) | `cover-landscape-1920x1080.png` | 16:9 |
 | 커버(세로) | `cover-portrait-800x1200.png` | 2:3 |
 | 커버(정사각) | `cover-square-800x800.png` | 1:1 |
@@ -18,7 +18,8 @@ GitHub: https://github.com/wjddytpq27/afk-inc-idle
 
 ### 제출 메타데이터 (복붙용)
 
-- **Title**: AFK 주식회사 (AFK Inc.)
+- **Title**: AFK Inc. (한국어 UI에선 "AFK 주식회사")
+- **Language**: 영어 기본 + 한국어 자동감지/토글(HUD의 한/EN 버튼). 브라우저 언어로 자동 선택.
 - **Category**: Idle / Clicker
 - **Tags**: idle, clicker, incremental, tycoon, money, management, ai, prestige, casual
 - **Orientation**: Portrait (모바일 세로) + 데스크톱 지원
