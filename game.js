@@ -792,6 +792,14 @@
     e.preventDefault();
     doClick(e);
   });
+  // Keyboard accessibility (Enter/Space on the focused clicker) — the button's
+  // native click fires on key press; pointer taps use pointerdown, so no dupes.
+  clickBtn.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      doClick(e);
+    }
+  });
   prestigeBtn.addEventListener("click", prestige);
   document.getElementById("offlineOk").addEventListener("click", () => {
     lastOfflineGain = 0;
