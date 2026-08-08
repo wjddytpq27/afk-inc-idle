@@ -73,6 +73,7 @@
   const BOOST_MS = 60000; // 2× income for 60s per rewarded ad
   let boostUntil = 0; // runtime only — not saved (no boost carries across reload)
   let lastOfflineGain = 0; // pending offline gain, doublable via rewarded ad
+  let sdkMuted = false; // CrazyGames site-level mute (overrides in-game audio)
   function boostActive() {
     return Date.now() < boostUntil;
   }
@@ -149,7 +150,7 @@
       if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
     },
     tone(freq, dur, type, gain) {
-      if (state.muted || !this.ctx) return;
+      if (state.muted || sdkMuted || !this.ctx) return; // SDK mute wins
       const t = this.ctx.currentTime;
       const o = this.ctx.createOscillator();
       const g = this.ctx.createGain();
@@ -195,6 +196,23 @@
           await SDK.init();
           this.sdk = SDK;
           this.ready = SDK.environment !== "disabled";
+          // Respect the CrazyGames site-level mute setting (required).
+          if (this.ready && SDK.game) {
+            try {
+              sdkMuted = !!(SDK.game.settings && SDK.game.settings.muteAudio);
+              if (typeof SDK.game.addSettingsChangeListener === "function") {
+                SDK.game.addSettingsChangeListener(() => {
+                  try {
+                    sdkMuted = !!SDK.game.settings.muteAudio;
+                  } catch (_) {
+                    /* ignore */
+                  }
+                });
+              }
+            } catch (_) {
+              /* settings unavailable — in-game mute still works */
+            }
+          }
         }
       } catch (_) {
         this.ready = false; // SDK missing/blocked — fallbacks handle it
@@ -236,10 +254,13 @@
               call(onReward);
             },
             adError: () => {
+              // No ad available (Basic Launch / adblock / no-fill) → still grant
+              // this optional reward so the feature always works. Real ads show
+              // and earn once the game is promoted to Full Launch.
               if (done) return;
               done = true;
               restore();
-              call(opts.onFail);
+              call(onReward);
             },
           });
           return;
@@ -927,15 +948,12 @@
     boostBtn.addEventListener("click", () => {
       if (boostActive()) return;
       Sfx.init();
-      Ads.rewarded(
-        () => {
-          boostUntil = Date.now() + BOOST_MS;
-          Sfx.milestone();
-          toast(L.tBoostOn, "🔥");
-          renderBoost();
-        },
-        { onFail: () => toast(L.tAdFailBoost, "⚠️") },
-      );
+      Ads.rewarded(() => {
+        boostUntil = Date.now() + BOOST_MS;
+        Sfx.milestone();
+        toast(L.tBoostOn, "🔥");
+        renderBoost();
+      });
     });
   }
 
@@ -946,15 +964,12 @@
       const bonus = lastOfflineGain; // grant the same amount again → 2×
       lastOfflineGain = 0;
       offlineDoubleBtn.classList.add("hidden");
-      Ads.rewarded(
-        () => {
-          addMoney(bonus);
-          Sfx.milestone();
-          toast(L.tOfflineDoubled(fmt(bonus)), "💰");
-          offlineModal.classList.add("hidden");
-        },
-        { onFail: () => toast(L.tAdFailOffline, "⚠️") },
-      );
+      Ads.rewarded(() => {
+        addMoney(bonus);
+        Sfx.milestone();
+        toast(L.tOfflineDoubled(fmt(bonus)), "💰");
+        offlineModal.classList.add("hidden");
+      });
     });
   }
 

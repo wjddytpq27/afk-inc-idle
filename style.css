@@ -132,7 +132,7 @@ body {
 }
 .scene {
   position: relative;
-  height: clamp(118px, 17vh, 158px);
+  height: clamp(92px, 15vh, 160px); /* shrinks on short viewports so the boost CTA stays visible */
   transition: background 1.2s var(--ease);
   overflow: hidden;
 }
@@ -257,7 +257,7 @@ body {
 .clicker-wrap { position: relative; text-align: center; padding: 2px 0; }
 .clicker {
   position: relative;
-  width: 128px; height: 128px;
+  width: clamp(100px, 20vh, 150px); height: clamp(100px, 20vh, 150px); /* scales with viewport height */
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -277,7 +277,7 @@ body {
   touch-action: manipulation;
 }
 .clicker:active { transform: scale(0.94); }
-.clicker-emoji { font-size: 44px; line-height: 1; filter: drop-shadow(0 3px 4px rgba(0,0,0,0.25)); }
+.clicker-emoji { font-size: clamp(32px, 7.5vh, 46px); line-height: 1; filter: drop-shadow(0 3px 4px rgba(0,0,0,0.25)); }
 .clicker-label { font-size: 12px; font-weight: 800; letter-spacing: 0.02em; }
 .clickval { margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--gold); }
 
@@ -726,8 +726,6 @@ body {
     gap: 24px;
     align-items: start;
   }
-  .scene { height: 200px; }
-  .clicker { width: 148px; height: 148px; }
   .clicker-wrap { padding: 6px 0 4px; }
 }
 /* Only pin the stage when the viewport is tall enough to show the whole stage
