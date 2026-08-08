@@ -50,14 +50,27 @@ body {
 .app {
   max-width: 520px;
   margin: 0 auto;
-  padding: 12px 14px calc(28px + var(--safe-b));
+  padding: 10px 14px calc(8px + var(--safe-b));
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
+  height: 100vh;
+  height: 100dvh; /* fill the viewport; the page itself never scrolls */
+  overflow: hidden;
 }
-.play { display: flex; flex-direction: column; gap: 12px; }
-.stage { display: flex; flex-direction: column; gap: 12px; }
-.shop { display: flex; flex-direction: column; gap: 12px; }
+/* Fixed top (HUD + stage); only the shop list scrolls inside its own box. */
+.play { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+.stage { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+.shop {
+  display: flex; flex-direction: column; gap: 10px;
+  flex: 1; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  padding-bottom: 6px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+.hud { flex-shrink: 0; }
+.foot { flex-shrink: 0; }
 
 /* ── HUD ───────────────────────────────────────────────── */
 .hud {
@@ -726,21 +739,15 @@ body {
 /* ── Desktop / landscape: 2-panel "arcade cabinet" ─────── */
 @media (min-width: 900px) {
   body { background: radial-gradient(90% 70% at 50% -10%, #1a1e44 0%, var(--bg) 55%), var(--bg); }
-  .app { max-width: 1060px; padding: 16px 24px 32px; gap: 16px; }
+  .app { max-width: 1060px; padding: 14px 24px 18px; gap: 14px; }
   .play {
     display: grid;
     grid-template-columns: minmax(320px, 380px) 1fr;
     gap: 24px;
-    align-items: start;
+    align-items: stretch; /* shop cell fills full height and scrolls internally */
   }
+  .stage { align-self: start; }
   .clicker-wrap { padding: 6px 0 4px; }
-}
-/* Only pin the stage when the viewport is tall enough to show the whole stage
-   (incl. the boost CTA). On short embeds it stays in normal flow so the boost
-   is always reachable by scrolling. */
-@media (min-width: 900px) and (min-height: 780px) {
-  .stage { position: sticky; top: 92px; }
-  .shop { min-width: 0; }
 }
 @media (min-width: 1180px) {
   .app { max-width: 1160px; }

@@ -132,7 +132,7 @@ body {
 }
 .scene {
   position: relative;
-  height: clamp(92px, 15vh, 160px); /* shrinks on short viewports so the boost CTA stays visible */
+  height: clamp(110px, 17vh, 184px); /* shrinks on short viewports so the boost CTA stays visible */
   transition: background 1.2s var(--ease);
   overflow: hidden;
 }
@@ -253,32 +253,39 @@ body {
   backdrop-filter: blur(4px);
 }
 
-/* ── Clicker ───────────────────────────────────────────── */
+/* ── Clicker (primary CTA — full-width gold bar) ────────── */
 .clicker-wrap { position: relative; text-align: center; padding: 2px 0; }
 .clicker {
   position: relative;
-  width: clamp(100px, 20vh, 150px); height: clamp(100px, 20vh, 150px); /* scales with viewport height */
-  border-radius: 50%;
+  width: 100%;
+  min-height: clamp(96px, 15vh, 132px); /* scales with viewport height */
+  border-radius: 22px;
   border: none;
   cursor: pointer;
   color: #2a1c00;
   background:
-    radial-gradient(circle at 35% 30%, #ffe89a 0%, var(--gold) 38%, var(--gold-deep) 100%);
+    radial-gradient(130% 180% at 28% 18%, #ffe89a 0%, var(--gold) 46%, var(--gold-deep) 100%);
   box-shadow:
     0 12px 30px rgba(245, 166, 35, 0.4),
-    inset 0 -6px 14px rgba(180, 110, 0, 0.5),
-    inset 0 4px 10px rgba(255, 255, 255, 0.55);
+    inset 0 -6px 14px rgba(180, 110, 0, 0.45),
+    inset 0 5px 12px rgba(255, 255, 255, 0.55);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  transition: transform 0.08s var(--ease);
+  gap: 14px;
+  transition: transform 0.08s var(--ease), box-shadow 0.2s;
+  animation: clickerBreathe 2.8s ease-in-out infinite;
   touch-action: manipulation;
+  overflow: hidden;
 }
-.clicker:active { transform: scale(0.94); }
-.clicker-emoji { font-size: clamp(32px, 7.5vh, 46px); line-height: 1; filter: drop-shadow(0 3px 4px rgba(0,0,0,0.25)); }
-.clicker-label { font-size: 12px; font-weight: 800; letter-spacing: 0.02em; }
+.clicker:active { transform: scale(0.975); }
+@keyframes clickerBreathe {
+  0%, 100% { box-shadow: 0 12px 30px rgba(245, 166, 35, 0.35), inset 0 -6px 14px rgba(180, 110, 0, 0.45), inset 0 5px 12px rgba(255, 255, 255, 0.55); }
+  50% { box-shadow: 0 14px 46px rgba(245, 166, 35, 0.62), inset 0 -6px 14px rgba(180, 110, 0, 0.45), inset 0 5px 12px rgba(255, 255, 255, 0.55); }
+}
+.clicker-emoji { font-size: clamp(44px, 8.5vh, 60px); line-height: 1; filter: drop-shadow(0 3px 5px rgba(0,0,0,0.28)); }
+.clicker-label { font-size: clamp(17px, 2.6vh, 22px); font-weight: 900; letter-spacing: 0.01em; }
 .clickval { margin-top: 8px; font-size: 14px; font-weight: 700; color: var(--gold); }
 
 .float {
